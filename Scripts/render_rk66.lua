@@ -102,9 +102,12 @@ for _, target_name in ipairs(tracks_to_render) do
         reaper.TrackFX_SetEnabled(track, fx, true)
       end
 
-      local wet_pattern = string.format("%s_wet_%s",
+      -- Add timestamp: yymmddH_M_S
+      local t = os.date("%y%m%d_%H_%M_%S")
+      local wet_pattern = string.format("%s_wet_%s_%s",
         project_name,
-        track_name:gsub(" ", "_")
+        track_name:gsub(" ", "_"),
+        t
       )
       reaper.GetSetProjectInfo_String(0, "RENDER_FILE", export_dir, true)
       reaper.GetSetProjectInfo_String(0, "RENDER_PATTERN", wet_pattern, true)
@@ -123,9 +126,10 @@ for _, target_name in ipairs(tracks_to_render) do
         reaper.TrackFX_SetEnabled(track, fx, false)
       end
 
-      local dry_pattern = string.format("%s_dry_%s",
+      local dry_pattern = string.format("%s_dry_%s_%s",
         project_name,
-        track_name:gsub(" ", "_")
+        track_name:gsub(" ", "_"),
+        t
       )
       reaper.GetSetProjectInfo_String(0, "RENDER_FILE", export_dir, true)
       reaper.GetSetProjectInfo_String(0, "RENDER_PATTERN", dry_pattern, true)
