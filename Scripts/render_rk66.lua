@@ -6,6 +6,8 @@
 -- Adjusts Phil Folder fader to +0 dB and pan to center before loop, restores after
 -- ==========================
 
+reaper.Undo_BeginBlock()
+
 -- 🧙‍♂️ CONFIGURATION
 local tracks_to_render = {
   "Philip Rythm Main",
@@ -16,6 +18,9 @@ local tracks_to_render = {
 }
 
 local export_dir = "C:\\export"  -- No trailing backslash
+
+-- Set to true to enable WET render, false to skip
+local do_wet_render = true
 
 -- ==========================
 -- 🗃️ Get project name (e.g. "1" from "1.rpp")
@@ -96,29 +101,31 @@ for _, target_name in ipairs(tracks_to_render) do
       -- 🟢 Solo track
       reaper.SetMediaTrackInfo_Value(track, "I_SOLO", 1)
 
+
       -- ==========================
-      -- 🔊 WET render
-      for fx = 0, fx_count - 1 do
-        reaper.TrackFX_SetEnabled(track, fx, true)
-      end
-
-      -- Add timestamp: yymmddH_M_S
+      -- 🔊 WET render (conditional)
       local t = os.date("%y%m%d_%H_%M_%S")
-      local wet_pattern = string.format("%s_wet_%s_%s",
-        project_name,
-        track_name:gsub(" ", "_"),
-        t
-      )
-      reaper.GetSetProjectInfo_String(0, "RENDER_FILE", export_dir, true)
-      reaper.GetSetProjectInfo_String(0, "RENDER_PATTERN", wet_pattern, true)
-      reaper.GetSetProjectInfo(0, "RENDER_SRATE", 48000, true)
-      reaper.GetSetProjectInfo(0, "RENDER_CHANNELS", 1, true)
-      reaper.GetSetProjectInfo(0, "RENDER_BPS", 24, true)
-      reaper.GetSetProjectInfo(0, "RENDER_SETTINGS", 0, true)
-      reaper.GetSetProjectInfo(0, "RENDER_BOUNDSFLAG", 1, true)
-
-      reaper.ShowConsoleMsg("Rendering WET: " .. export_dir .. "\\" .. wet_pattern .. ".wav\n")
-      reaper.Main_OnCommand(42230, 0)
+      if do_wet_render then
+        for fx = 0, fx_count - 1 do
+          reaper.TrackFX_SetEnabled(track, fx, true)
+        end
+        local wet_pattern = string.format("%s_wet_%s_%s",
+          project_name,
+          track_name:gsub(" ", "_"),
+          t
+        )
+        reaper.GetSetProjectInfo_String(0, "RENDER_FILE", export_dir, true)
+        reaper.GetSetProjectInfo_String(0, "RENDER_PATTERN", wet_pattern, true)
+        reaper.GetSetProjectInfo(0, "RENDER_SRATE", 48000, true)
+        reaper.GetSetProjectInfo(0, "RENDER_CHANNELS", 1, true)
+        reaper.GetSetProjectInfo(0, "RENDER_BPS", 24, true)
+        reaper.GetSetProjectInfo(0, "RENDER_SETTINGS", 0, true)
+        reaper.GetSetProjectInfo(0, "RENDER_BOUNDSFLAG", 1, true)
+        reaper.ShowConsoleMsg("Rendering WET: " .. export_dir .. "\\" .. wet_pattern .. ".wav\n")
+        reaper.Main_OnCommand(42230, 0)
+      else
+        reaper.ShowConsoleMsg("Skipping WET render for: " .. track_name .. "\n")
+      end
 
       -- ==========================
       -- 🟡 DRY render
@@ -172,4 +179,5 @@ if phil_folder ~= nil then
   reaper.ShowConsoleMsg("Phil Folder fader, pan, and FX states restored.\n")
 end
 
+reaper.Undo_EndBlock("RK66 Render", -1)
 reaper.ShowConsoleMsg("\n✅ ALL TRACKS DONE! RK66 EP RENDER COMPLETE! ✅\n")
